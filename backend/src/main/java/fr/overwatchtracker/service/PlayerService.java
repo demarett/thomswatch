@@ -1,5 +1,6 @@
 package fr.overwatchtracker.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.overwatchtracker.domain.*;
 import fr.overwatchtracker.dto.PlayerDtos.*;
@@ -24,10 +25,10 @@ public class PlayerService {
     if(refresh){var cache=cacheManager.getCache("overfastPlayers");if(cache!=null)cache.evict(id);}
     var profile=mapper.map(normalized,client.getPlayer(id),false); save(profile); return profile;
   }
-  @Transactional(readOnly=true) public List<HistoryPointDto> history(String battleTag){return snapshots.findTop100ByBattleTagOrderByCapturedAtAsc(normalize(battleTag)).stream().map(s->new HistoryPointDto(s.getCapturedAt(),s.getTotalTimePlayed(),s.getWinRate(),s.getTankRank(),s.getDamageRank(),s.getSupportRank())).toList();}
+  @Transactional(readOnly=true) public List<HistoryPointDto> history(String battleTag){var history=new java.util.ArrayList<>(snapshots.findLatestHistory(normalize(battleTag)));return history.reversed().stream().map(s->new HistoryPointDto(s.getCapturedAt(),s.getTotalTimePlayed(),s.getWinRate(),s.getTankRank(),s.getDamageRank(),s.getSupportRank())).toList();}
   @Transactional(readOnly=true) public List<RecentProfileDto> recent(){
     var unique=new LinkedHashMap<String,RecentProfileDto>();
-    for(var snapshot:snapshots.findTop100ByOrderByCapturedAtDesc()){
+    for(var snapshot:snapshots.findRecentDistinct()){
       if(unique.containsKey(snapshot.getBattleTag())) continue;
       var profile=fromJson(snapshot.getPayload());
       unique.put(snapshot.getBattleTag(),new RecentProfileDto(snapshot.getBattleTag(),snapshot.getUsername(),profile.avatar(),snapshot.getPlatform(),snapshot.getCapturedAt()));
@@ -40,9 +41,9 @@ public class PlayerService {
         .orElseThrow(()->new fr.overwatchtracker.integration.OverfastException("PLAYER_NOT_FOUND","Ce profil n'est pas encore enregistré."));
     return fromJson(snapshot.getPayload());
   }
-  private void save(PlayerProfileDto p){snapshots.save(new PlayerSnapshot(p.battleTag(),p.capturedAt(),p.username(),p.platform(),p.timePlayed(),p.winRate(),score(p,"tank"),score(p,"damage"),score(p,"support"),toJson(p)));}
+  private void save(PlayerProfileDto p){snapshots.save(new PlayerSnapshot(p.battleTag(),p.capturedAt(),p.username(),p.platform(),p.timePlayed(),p.winRate(),score(p,"tank"),score(p,"damage"),score(p,"support"),toJson(p),1));}
   private Integer score(PlayerProfileDto p,String role){return p.ranks().stream().filter(r->r.role().equals(role)).map(RankDto::score).findFirst().orElse(null);}
-  private String toJson(PlayerProfileDto p){try{return objectMapper.writeValueAsString(p);}catch(Exception e){throw new IllegalStateException("Sérialisation du snapshot impossible",e);}}
-  private PlayerProfileDto fromJson(String json){try{return objectMapper.readValue(json,PlayerProfileDto.class);}catch(Exception e){throw new IllegalStateException("Lecture du snapshot impossible",e);}}
+  private JsonNode toJson(PlayerProfileDto p){try{return objectMapper.valueToTree(p);}catch(Exception e){throw new IllegalStateException("Sérialisation du snapshot impossible",e);}}
+  private PlayerProfileDto fromJson(JsonNode json){try{return objectMapper.treeToValue(json,PlayerProfileDto.class);}catch(Exception e){throw new IllegalStateException("Lecture du snapshot impossible",e);}}
   public String normalize(String tag){return tag.trim().replaceFirst("-(?=\\d{3,12}$)","#");}
 }
