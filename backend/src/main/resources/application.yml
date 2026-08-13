@@ -1,0 +1,19 @@
+spring:
+  application.name: overwatch-tracker
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/overwatch_tracker}
+    username: ${SPRING_DATASOURCE_USERNAME:overwatch}
+    password: ${SPRING_DATASOURCE_PASSWORD:overwatch}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  cache.type: caffeine
+springdoc:
+  swagger-ui.path: /swagger-ui.html
+overfast:
+  base-url: ${OVERFAST_BASE_URL:https://overfast-api.tekrop.fr}
+  cache-minutes: ${OVERFAST_CACHE_MINUTES:10}
+  connect-timeout: 5s
+  read-timeout: 25s
+logging.level.fr.overwatchtracker: INFO
+
