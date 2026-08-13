@@ -43,10 +43,10 @@ class AppConfigTest {
   private record UnresponsiveEndpoint(ServerSocket server, List<Socket> connections)
       implements AutoCloseable {
     static UnresponsiveEndpoint create() throws IOException {
+      var loopback = InetAddress.getByName("127.0.0.1");
       var server = new ServerSocket();
-      server.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 1);
-      var address = new InetSocketAddress(
-          InetAddress.getLoopbackAddress(), server.getLocalPort());
+      server.bind(new InetSocketAddress(loopback, 0), 1);
+      var address = new InetSocketAddress(loopback, server.getLocalPort());
       var connections = new ArrayList<Socket>();
       while (true) {
         var connection = new Socket();
@@ -61,7 +61,7 @@ class AppConfigTest {
     }
 
     String url() {
-      return "http://127.0.0.1:" + server.getLocalPort();
+      return "http://" + server.getInetAddress().getHostAddress() + ":" + server.getLocalPort();
     }
 
     @Override
