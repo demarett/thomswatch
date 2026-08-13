@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import fr.overwatchtracker.service.PlayerService;
+import fr.overwatchtracker.service.PlayerApplicationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(PlayerController.class)
 class PlayerControllerValidationTest {
   @Autowired private MockMvc mockMvc;
-  @MockBean private PlayerService service;
+  @MockBean private PlayerApplicationService service;
 
   @Test
   void rejectsMissingBattleTagWithTheUniformError() throws Exception {

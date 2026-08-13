@@ -11,10 +11,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 @Service
-public class OverfastClient {
-  private static final Logger log=LoggerFactory.getLogger(OverfastClient.class);
+public class OverfastGateway {
+  private static final Logger log=LoggerFactory.getLogger(OverfastGateway.class);
   private final RestClient client;
-  public OverfastClient(RestClient.Builder builder, @Value("${overfast.base-url}") String baseUrl) {
+  public OverfastGateway(RestClient.Builder builder, @Value("${overfast.base-url}") String baseUrl) {
     this.client=builder.baseUrl(baseUrl).defaultHeader("User-Agent","OverwatchTracker/0.1").build();
   }
   @Cacheable(cacheNames="overfastPlayers", key="#playerId")
