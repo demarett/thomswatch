@@ -8,7 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { RecentProfile } from '../models';
-import { PlayerService } from '../player.service';
+import { PlayerApi } from '../player-api';
+import { toRouteBattleTag } from '../player-route';
+import { PlayerStore } from '../player-store';
 
 @Component({standalone:true,imports:[DatePipe,ReactiveFormsModule,MatButtonModule,MatFormFieldModule,MatInputModule,MatIconModule],template:`
 <section class="hero"><div class="eyebrow">VOTRE CARRIÈRE, LISIBLE</div><h1>Chaque partie raconte<br><span>votre progression.</span></h1><p>Recherchez votre profil public Overwatch, explorez vos héros et suivez votre évolution au fil du temps.</p>
@@ -20,11 +22,11 @@ import { PlayerService } from '../player.service';
 export class HomeComponent implements OnInit {
   readonly tag=new FormControl('',{nonNullable:true,validators:[Validators.required,Validators.pattern(/^[^#\s]{2,32}#[0-9]{3,12}$/)]});
   readonly loading=signal(false); readonly error=signal(''); readonly recent=signal<RecentProfile[]>([]);
-  constructor(private readonly players:PlayerService,private readonly router:Router){}
-  ngOnInit(){this.players.recent().subscribe({next:profiles=>this.recent.set(profiles)})}
+  constructor(private readonly api:PlayerApi,private readonly store:PlayerStore,private readonly router:Router){}
+  ngOnInit(){this.api.recent().subscribe({next:profiles=>this.recent.set(profiles)})}
   submit(event:SubmitEvent){event.preventDefault();this.search()}
   search(){if(this.tag.invalid)return;this.run(this.tag.value)}
   demo(){this.run('Demo#0000')}
-  open(profile:RecentProfile){this.loading.set(true);this.error.set('');this.players.openStored(profile.battleTag).subscribe({next:()=>this.router.navigateByUrl('/profil'),error:()=>{this.loading.set(false);this.error.set('Impossible de rouvrir ce profil.')},complete:()=>this.loading.set(false)})}
-  private run(tag:string){this.loading.set(true);this.error.set('');this.players.lookup(tag).subscribe({next:()=>this.router.navigateByUrl('/profil'),error:(e:HttpErrorResponse)=>{this.loading.set(false);this.error.set(e.error?.message??'Une erreur inattendue est survenue.')},complete:()=>this.loading.set(false)});}
+  open(profile:RecentProfile){this.loading.set(true);this.error.set('');this.store.begin();this.api.stored(profile.battleTag).subscribe({next:p=>{this.store.setProfile(p);void this.router.navigate(['/profil',toRouteBattleTag(p.battleTag)])},error:()=>{this.store.fail('Impossible de rouvrir ce profil.');this.loading.set(false);this.error.set('Impossible de rouvrir ce profil.')},complete:()=>this.loading.set(false)})}
+  private run(tag:string){this.loading.set(true);this.error.set('');this.store.begin();this.api.lookup(tag).subscribe({next:p=>{this.store.setProfile(p);void this.router.navigate(['/profil',toRouteBattleTag(p.battleTag)])},error:(e:HttpErrorResponse)=>{const message=e.error?.message??'Une erreur inattendue est survenue.';this.store.fail(message);this.loading.set(false);this.error.set(message)},complete:()=>this.loading.set(false)});}
 }

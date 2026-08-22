@@ -1,14 +1,17 @@
 package fr.overwatchtracker.dto;
 
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 public final class PlayerDtos {
   private PlayerDtos() {}
-  public static final String BATTLE_TAG_PATTERN = "^[^#\\s]{2,32}#[0-9]{3,12}$";
-  public record LookupRequest(@Pattern(regexp=BATTLE_TAG_PATTERN, message="Format attendu : Pseudo#1234") String battleTag) {}
+  public static final String BATTLE_TAG_PATTERN = "^[^#\\s-]{2,32}(?:#|-)\\d{3,12}$";
+  public record LookupRequest(
+      @NotBlank(message="Format attendu : Pseudo#1234")
+      @Pattern(regexp=BATTLE_TAG_PATTERN, message="Format attendu : Pseudo#1234") String battleTag) {}
   public record RankDto(String role, String division, Integer tier, Integer score) {}
   public record HeroDto(String key, String name, Long timePlayed, Long gamesPlayed, Long gamesWon, Double winRate, Map<String,Object> stats) {}
   public record HeroPortraitDto(String key, String name, String portrait) {}

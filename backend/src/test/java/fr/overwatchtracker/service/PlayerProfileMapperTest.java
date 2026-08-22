@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-class PlayerMapperTest {
+class PlayerProfileMapperTest {
   private final ObjectMapper json=new ObjectMapper();
-  private final PlayerMapper mapper=new PlayerMapper();
+  private final PlayerProfileMapper mapper=new PlayerProfileMapper();
 
   @Test void mapsOnlyActualHeroesFromComparisons() throws Exception {
     var root=json.readTree("""

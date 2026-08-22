@@ -1,6 +1,7 @@
 package fr.overwatchtracker.config;
 
 import java.time.Duration;
+import java.net.http.HttpClient;
 import java.util.concurrent.TimeUnit;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +17,8 @@ public class AppConfig {
   @Bean RestClientCustomizer timeouts(@Value("${overfast.connect-timeout}") Duration connect,
       @Value("${overfast.read-timeout}") Duration read) {
     return builder -> {
-      var factory = new JdkClientHttpRequestFactory();
+      var httpClient = HttpClient.newBuilder().connectTimeout(connect).build();
+      var factory = new JdkClientHttpRequestFactory(httpClient);
       factory.setReadTimeout(read);
       builder.requestFactory(factory);
     };

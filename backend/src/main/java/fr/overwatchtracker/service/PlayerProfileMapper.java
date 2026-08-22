@@ -7,7 +7,7 @@ import java.util.*;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PlayerMapper {
+public class PlayerProfileMapper {
   public PlayerProfileDto map(String battleTag, JsonNode root, boolean demo) {
     JsonNode summary=root.path("summary");
     String username=text(summary,"username", battleTag.substring(0,battleTag.indexOf('#')));
