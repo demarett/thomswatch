@@ -9,6 +9,7 @@ import fr.overwatchtracker.dto.PlayerDtos.RecentProfileDto;
 import fr.overwatchtracker.integration.OverfastException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +80,7 @@ public class SnapshotService {
     return profile.ranks().stream()
         .filter(rank -> rank.role().equals(role))
         .map(RankDto::score)
+        .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }

@@ -9,7 +9,6 @@ CREATE TABLE player_snapshots (
   tank_rank INTEGER,
   damage_rank INTEGER,
   support_rank INTEGER,
-  payload JSONB NOT NULL,
-  payload_version INTEGER NOT NULL CHECK (payload_version > 0)
+  payload TEXT NOT NULL
 );
 CREATE INDEX idx_snapshots_battletag_date ON player_snapshots (battle_tag, captured_at DESC);
