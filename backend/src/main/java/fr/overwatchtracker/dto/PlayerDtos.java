@@ -14,11 +14,15 @@ public final class PlayerDtos {
       @Pattern(regexp=BATTLE_TAG_PATTERN, message="Format attendu : Pseudo#1234") String battleTag) {}
   public record RankDto(String role, String division, Integer tier, Integer score) {}
   public record HeroDto(String key, String name, Long timePlayed, Long gamesPlayed, Long gamesWon, Double winRate, Map<String,Object> stats) {}
-  public record HeroPortraitDto(String key, String name, String portrait) {}
+  public record HeroPortraitDto(String key, String name, String portrait, String role) {}
   public record PlayerProfileDto(String battleTag, String username, String avatar, String namecard, String platform,
       Instant capturedAt, Long timePlayed, Long gamesPlayed, Long gamesWon, Long gamesLost, Double winRate,
       List<RankDto> ranks, List<HeroDto> heroes, Map<String,Object> globalStats, boolean demo) {}
   public record RecentProfileDto(String battleTag, String username, String avatar, String platform, Instant lastViewedAt) {}
   public record HistoryPointDto(Instant capturedAt, Long timePlayed, Double winRate, Integer tankRank, Integer damageRank, Integer supportRank) {}
+  public record StatReferenceDto(Double average, int sampleSize) {}
+  public record HeroReferenceDto(String heroKey, Map<String,StatReferenceDto> stats) {}
+  public record RankReferenceDto(String role, String division, int minimumSampleSize, int playerCount,
+      Map<String,HeroReferenceDto> heroes) {}
   public record ApiError(String code, String message, Instant timestamp) {}
 }

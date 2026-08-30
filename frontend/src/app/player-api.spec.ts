@@ -27,6 +27,11 @@ describe('PlayerApi', () => {
     expect(http.expectOne('/api/players/recent').request.method).toBe('GET');
   });
 
+  it('loads every saved profile for comparison', () => {
+    api.saved().subscribe();
+    expect(http.expectOne('/api/players/saved').request.method).toBe('GET');
+  });
+
   it('loads a stored profile using its route BattleTag', () => {
     api.stored('Ana#1234').subscribe();
     expect(http.expectOne('/api/players/Ana-1234/stored').request.method).toBe('GET');

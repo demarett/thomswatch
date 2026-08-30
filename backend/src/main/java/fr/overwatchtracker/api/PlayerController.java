@@ -20,7 +20,14 @@ public class PlayerController {
   @PostMapping("/lookup") @ResponseStatus(HttpStatus.CREATED)
   public PlayerProfileDto lookup(@Valid @RequestBody LookupRequest request){return service.load(BattleTag.parse(request.battleTag()),false);}
   @GetMapping("/recent") public List<RecentProfileDto> recent(){return service.recent();}
+  @GetMapping("/saved") public List<RecentProfileDto> saved(){return service.saved();}
   @GetMapping("/{battleTag}/stored") public PlayerProfileDto stored(@PathVariable @Pattern(regexp=PlayerDtos.BATTLE_TAG_PATTERN) String battleTag){return service.stored(BattleTag.parse(battleTag));}
   @PostMapping("/{battleTag}/refresh") public PlayerProfileDto refresh(@PathVariable @Pattern(regexp=PlayerDtos.BATTLE_TAG_PATTERN) String battleTag){return service.load(BattleTag.parse(battleTag),true);}
   @GetMapping("/{battleTag}/history") public List<HistoryPointDto> history(@PathVariable @Pattern(regexp=PlayerDtos.BATTLE_TAG_PATTERN) String battleTag){return service.history(BattleTag.parse(battleTag));}
+  @GetMapping("/{battleTag}/references/{role}")
+  public RankReferenceDto references(
+      @PathVariable @Pattern(regexp=PlayerDtos.BATTLE_TAG_PATTERN) String battleTag,
+      @PathVariable @Pattern(regexp="tank|damage|support") String role) {
+    return service.references(BattleTag.parse(battleTag), role);
+  }
 }

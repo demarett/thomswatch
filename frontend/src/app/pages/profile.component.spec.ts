@@ -17,6 +17,14 @@ const profile: PlayerProfile = {
   gamesLost: 0, winRate: 0, ranks: [], heroes: [], globalStats: {}, demo: false
 };
 
+const detailedProfile: PlayerProfile = {
+  ...profile,
+  heroes: [{
+    key: 'ana', name: 'Ana', timePlayed: 3600, gamesPlayed: 5, gamesWon: 3, winRate: 60,
+    stats: {combat: {label: 'Combat', stats: [{key: 'eliminations', label: 'Eliminations', value: 42}]}}
+  }]
+};
+
 describe('ProfileComponent route loading', () => {
   const api = {
     lookup: vi.fn(), recent: vi.fn(), stored: vi.fn(), refresh: vi.fn(), history: vi.fn(), heroes: vi.fn()
@@ -65,6 +73,20 @@ describe('ProfileComponent route loading', () => {
     harness.routeNativeElement?.querySelector<HTMLButtonElement>('button')?.click();
 
     expect(api.refresh).toHaveBeenCalledWith('Ana#1234');
+  });
+
+  it('opens a readable detailed hero card', async () => {
+    api.stored.mockReturnValue(of(detailedProfile));
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/profil/Ana-1234', ProfileComponent);
+    harness.detectChanges();
+
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>('.hero-row')?.click();
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.querySelector('.hero-detail')?.textContent).toContain('FICHE DU HÉROS');
+    expect(harness.routeNativeElement?.querySelector('.stat-grid')?.textContent).toContain('Éliminations');
+    expect(harness.routeNativeElement?.querySelector('.stat-grid')?.textContent).toContain('42');
   });
 });
 

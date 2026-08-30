@@ -3,6 +3,7 @@ package fr.overwatchtracker.service;
 import fr.overwatchtracker.dto.PlayerDtos.HistoryPointDto;
 import fr.overwatchtracker.dto.PlayerDtos.PlayerProfileDto;
 import fr.overwatchtracker.dto.PlayerDtos.RecentProfileDto;
+import fr.overwatchtracker.dto.PlayerDtos.RankReferenceDto;
 import fr.overwatchtracker.integration.OverfastGateway;
 import java.util.List;
 import org.springframework.cache.CacheManager;
@@ -14,27 +15,19 @@ public class PlayerApplicationService {
   private final PlayerProfileMapper mapper;
   private final SnapshotService snapshots;
   private final CacheManager cacheManager;
-  private final DemoData demo;
 
   public PlayerApplicationService(
       OverfastGateway gateway,
       PlayerProfileMapper mapper,
       SnapshotService snapshots,
-      CacheManager cacheManager,
-      DemoData demo) {
+      CacheManager cacheManager) {
     this.gateway = gateway;
     this.mapper = mapper;
     this.snapshots = snapshots;
     this.cacheManager = cacheManager;
-    this.demo = demo;
   }
 
   public PlayerProfileDto load(BattleTag battleTag, boolean refresh) {
-    if (battleTag.value().equalsIgnoreCase("Demo#0000")) {
-      var profile = demo.profile();
-      snapshots.save(profile);
-      return profile;
-    }
     if (refresh) {
       var cache = cacheManager.getCache("overfastPlayers");
       if (cache != null) {
@@ -55,7 +48,15 @@ public class PlayerApplicationService {
     return snapshots.recent();
   }
 
+  public List<RecentProfileDto> saved() {
+    return snapshots.saved();
+  }
+
   public PlayerProfileDto stored(BattleTag battleTag) {
     return snapshots.stored(battleTag);
+  }
+
+  public RankReferenceDto references(BattleTag battleTag, String role) {
+    return snapshots.references(battleTag, role);
   }
 }

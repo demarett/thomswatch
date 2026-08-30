@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HeroPortrait, HistoryPoint, PlayerProfile, RecentProfile } from './models';
+import { HeroPortrait, HistoryPoint, PlayerProfile, RankReference, RecentProfile } from './models';
 import { toRouteBattleTag } from './player-route';
 
 @Injectable({providedIn: 'root'})
@@ -15,6 +15,10 @@ export class PlayerApi {
     return this.http.get<RecentProfile[]>('/api/players/recent');
   }
 
+  saved() {
+    return this.http.get<RecentProfile[]>('/api/players/saved');
+  }
+
   stored(battleTag: string) {
     return this.http.get<PlayerProfile>(`/api/players/${encodeURIComponent(toRouteBattleTag(battleTag))}/stored`);
   }
@@ -25,6 +29,10 @@ export class PlayerApi {
 
   history(battleTag: string) {
     return this.http.get<HistoryPoint[]>(`/api/players/${encodeURIComponent(toRouteBattleTag(battleTag))}/history`);
+  }
+
+  references(battleTag: string, role: string) {
+    return this.http.get<RankReference>(`/api/players/${encodeURIComponent(toRouteBattleTag(battleTag))}/references/${role}`);
   }
 
   heroes() {
