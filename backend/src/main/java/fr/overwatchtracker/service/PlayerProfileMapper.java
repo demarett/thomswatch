@@ -14,10 +14,12 @@ public class PlayerProfileMapper {
     String platform=firstPlatform(summary.path("competitive"));
     List<RankDto> ranks=readRanks(summary.path("competitive"),platform);
     JsonNode statsRoot=root.path("stats");
-    long time=findNumeric(statsRoot,"time_played");
-    long games=findNumeric(statsRoot,"games_played");
-    long wins=findNumeric(statsRoot,"games_won");
-    long losses=Math.max(0,games-wins);
+    JsonNode competitiveStats=platform==null ? statsRoot.path("pc").path("competitive") : statsRoot.path(platform).path("competitive");
+    JsonNode allHeroes=competitiveStats.path("career_stats").path("all-heroes");
+    long time=careerGameStat(allHeroes,"time_played",findNumeric(competitiveStats,"time_played"));
+    long games=careerGameStat(allHeroes,"games_played",findNumeric(competitiveStats,"games_played"));
+    long wins=careerGameStat(allHeroes,"games_won",findNumeric(competitiveStats,"games_won"));
+    long losses=careerGameStat(allHeroes,"games_lost",Math.max(0,games-wins));
     double winRate=games==0 ? 0 : Math.round(wins*1000d/games)/10d;
     List<HeroDto> heroes=readHeroes(statsRoot,platform);
     Map<String,Object> globals=new LinkedHashMap<>();
@@ -49,9 +51,41 @@ public class PlayerProfileMapper {
       long games=findNumeric(career,"games_played");
       long heroWins=wins.getOrDefault(key,findNumeric(career,"games_won"));
       double rate=rates.getOrDefault(key,games==0?0:Math.round(heroWins*1000d/games)/10d);
-      out.add(new HeroDto(key,title(key),time,games,heroWins,rate,Map.of()));
+      out.add(new HeroDto(key,title(key),time,games,heroWins,rate,readCareerStats(career)));
     });
     return out.stream().sorted(Comparator.comparing(HeroDto::timePlayed).reversed()).limit(12).toList();
+  }
+  private Map<String,Object> readCareerStats(JsonNode career) {
+    Map<String,Object> categories=new LinkedHashMap<>();
+    if(!career.isArray()) return categories;
+    for(JsonNode category:career) {
+      String key=text(category,"category",null);
+      if(key==null || !category.path("stats").isArray()) continue;
+      Map<String,Map<String,Object>> uniqueStats=new LinkedHashMap<>();
+      for(JsonNode stat:category.path("stats")) {
+        String statKey=text(stat,"key",null);
+        JsonNode value=stat.get("value");
+        if(statKey==null || value==null || value.isNull() || !value.isValueNode()) continue;
+        Map<String,Object> item=new LinkedHashMap<>();
+        item.put("key",statKey);
+        item.put("label",text(stat,"label",title(statKey)));
+        item.put("value",scalar(value));
+        uniqueStats.putIfAbsent(statKey,item);
+      }
+      if(!uniqueStats.isEmpty()) {
+        Map<String,Object> result=new LinkedHashMap<>();
+        result.put("label",text(category,"label",title(key)));
+        result.put("stats",new ArrayList<>(uniqueStats.values()));
+        categories.put(key,result);
+      }
+    }
+    return categories;
+  }
+  private Object scalar(JsonNode value) {
+    if(value.isIntegralNumber()) return value.asLong();
+    if(value.isFloatingPointNumber()) return value.asDouble();
+    if(value.isBoolean()) return value.asBoolean();
+    return value.asText();
   }
   private Map<String,Long> comparisonValues(JsonNode comparisons,String stat){
     Map<String,Long> values=new LinkedHashMap<>();
@@ -72,7 +106,17 @@ public class PlayerProfileMapper {
     }
     if(node.isArray()){long total=0;for(JsonNode n:node)total=Math.max(total,findNumeric(n,key));return total;} return 0;
   }
-  private String firstPlatform(JsonNode node){if(!node.isObject())return null;var it=node.fieldNames();return it.hasNext()?it.next():null;}
+  private long careerGameStat(JsonNode career,String key,long fallback) {
+    if(!career.isArray()) return fallback;
+    for(JsonNode category:career) {
+      if(!"game".equals(category.path("category").asText())) continue;
+      for(JsonNode stat:category.path("stats")) {
+        if(key.equals(stat.path("key").asText()) && stat.path("value").isNumber()) return stat.path("value").asLong();
+      }
+    }
+    return fallback;
+  }
+  private String firstPlatform(JsonNode node){if(!node.isObject())return null;if(node.has("pc"))return "pc";var it=node.fieldNames();return it.hasNext()?it.next():null;}
   private String text(JsonNode n,String k,String fallback){return n.hasNonNull(k)?n.get(k).asText():fallback;}
   private Integer integer(JsonNode n,String k){return n.hasNonNull(k)?n.get(k).asInt():null;}
   private Integer rankScore(String division,Integer tier){if(division==null||tier==null)return null;int base=List.of("bronze","silver","gold","platinum","diamond","master","grandmaster","champion").indexOf(division.toLowerCase());return base<0?null:base*5+(6-tier);}

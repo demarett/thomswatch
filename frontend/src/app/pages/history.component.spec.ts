@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { routes } from '../app.routes';
 import { HistoryPoint } from '../models';
 import { PlayerApi } from '../player-api';
@@ -44,5 +44,29 @@ describe('HistoryComponent route loading', () => {
 
     expect(api.history).toHaveBeenCalledWith('Ana#1234');
     expect(harness.routeNativeElement?.textContent).toContain('Snapshots enregistrés');
+  });
+
+  it('draws a flat history in the visible center of the chart', async () => {
+    api.history.mockReturnValue(of([history[0], {...history[0], capturedAt: '2026-08-14T00:00:00Z'}]));
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/historique/Ana-1234', HistoryComponent);
+
+    expect(harness.routeNativeElement?.querySelector('polyline')?.getAttribute('points')).toBe('0,90 600,90');
+    expect(harness.routeNativeElement?.querySelectorAll('circle')).toHaveLength(4);
+    expect(harness.routeNativeElement?.textContent).toContain('Aucune variation sur 2 snapshots');
+  });
+
+  it('redraws when history arrives asynchronously', async () => {
+    const response = new Subject<HistoryPoint[]>();
+    api.history.mockReturnValue(response);
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/historique/Ana-1234', HistoryComponent);
+    expect(harness.routeNativeElement?.textContent).toContain('Aucune donnée enregistrée');
+
+    response.next(history);
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.textContent).toContain('Snapshots enregistrés');
+    expect(harness.routeNativeElement?.querySelector('svg')).not.toBeNull();
   });
 });

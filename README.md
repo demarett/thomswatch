@@ -29,8 +29,6 @@ URLs locales :
 - santé du backend : http://localhost:8080/actuator/health
 - santé du frontend : http://localhost:4200/healthz
 
-Pour découvrir l’interface sans BattleTag réel, cliquer sur **Explorer avec le profil de démonstration**. Le profil spécial `Demo#0000` ne contacte pas OverFast et génère aussi des snapshots.
-
 ## Développement local
 
 Le backend nécessite Java 21 et un PostgreSQL disponible. Maven n'a pas besoin

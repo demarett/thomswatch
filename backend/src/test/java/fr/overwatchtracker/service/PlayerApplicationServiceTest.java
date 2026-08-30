@@ -22,7 +22,6 @@ class PlayerApplicationServiceTest {
   @Mock private OverfastGateway gateway;
   @Mock private SnapshotService snapshots;
   @Mock private CacheManager cacheManager;
-  @Mock private DemoData demo;
 
   private final ObjectMapper json = new ObjectMapper();
   private PlayerApplicationService service;
@@ -30,7 +29,7 @@ class PlayerApplicationServiceTest {
   @BeforeEach
   void setUp() {
     service = new PlayerApplicationService(
-        gateway, new PlayerProfileMapper(), snapshots, cacheManager, demo);
+        gateway, new PlayerProfileMapper(), snapshots, cacheManager);
   }
 
   @Test
