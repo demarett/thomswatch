@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-overwatch_tracker}
+      POSTGRES_USER: ${POSTGRES_USER:-overwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-overwatch}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-overwatch_tracker}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-overwatch}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-overwatch}
+      OVERFAST_BASE_URL: ${OVERFAST_BASE_URL:-https://overfast-api.tekrop.fr}
+      OVERFAST_CACHE_MINUTES: ${OVERFAST_CACHE_MINUTES:-10}
+      OVERFAST_CONNECT_TIMEOUT: ${OVERFAST_CONNECT_TIMEOUT:-5s}
+      OVERFAST_READ_TIMEOUT: ${OVERFAST_READ_TIMEOUT:-25s}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/healthz >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  postgres-data:

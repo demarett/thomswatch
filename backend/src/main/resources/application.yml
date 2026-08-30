@@ -1,0 +1,32 @@
+spring:
+  application.name: thomswatch
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/overwatch_tracker}
+    username: ${SPRING_DATASOURCE_USERNAME:overwatch}
+    password: ${SPRING_DATASOURCE_PASSWORD:overwatch}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  cache.type: caffeine
+server:
+  port: ${PORT:8080}
+springdoc:
+  swagger-ui.path: /swagger-ui.html
+overfast:
+  base-url: ${OVERFAST_BASE_URL:https://overfast-api.tekrop.fr}
+  cache-minutes: ${OVERFAST_CACHE_MINUTES:10}
+  connect-timeout: ${OVERFAST_CONNECT_TIMEOUT:5s}
+  read-timeout: ${OVERFAST_READ_TIMEOUT:25s}
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+logging.level.fr.overwatchtracker: INFO
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
