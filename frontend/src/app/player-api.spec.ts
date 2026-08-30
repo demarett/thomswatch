@@ -13,7 +13,10 @@ describe('PlayerApi', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    delete window.__THOMSWATCH_CONFIG__;
+  });
 
   it('looks up a BattleTag', () => {
     api.lookup('Ana#1234').subscribe();
@@ -52,5 +55,13 @@ describe('PlayerApi', () => {
   it('loads hero portraits', () => {
     api.heroes().subscribe();
     expect(http.expectOne('/api/heroes').request.method).toBe('GET');
+  });
+
+  it('prefixes requests with the deployed API URL', () => {
+    window.__THOMSWATCH_CONFIG__ = {apiBaseUrl: 'https://thomswatch-api.example/'};
+
+    api.recent().subscribe();
+
+    expect(http.expectOne('https://thomswatch-api.example/api/players/recent').request.method).toBe('GET');
   });
 });

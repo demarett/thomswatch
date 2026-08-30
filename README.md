@@ -1,4 +1,4 @@
-# Overwatch Tracker
+# Thomswatch
 
 Application web personnelle pour consulter et historiser les statistiques publiques d’un joueur Overwatch. Le frontend ne contacte jamais OverFast directement : toutes les requêtes passent par le backend Spring Boot.
 
@@ -49,6 +49,75 @@ npm start
 
 Le serveur Angular utilise déjà `proxy.conf.json` pour transmettre `/api` à `localhost:8080`. Les variables de connexion peuvent être surchargées à partir de `.env.example`.
 
+## Hébergement gratuit
+
+Le déploiement public utilise trois services :
+
+- GitHub Pages sert le frontend Angular ;
+- Render exécute l'API Spring Boot à partir de `backend/Dockerfile` ;
+- Neon conserve la base PostgreSQL.
+
+Le workflow `.github/workflows/deploy-pages.yml` publie automatiquement le
+frontend après chaque push sur `main`. Le fichier `render.yaml` décrit le
+backend Render. En production, Angular utilise des routes avec `#`, compatibles
+avec le rafraîchissement direct d'une page GitHub Pages.
+
+### 1. Créer la base Neon
+
+Créer un projet PostgreSQL gratuit dans Neon, puis conserver les trois valeurs
+de connexion affichées par Neon : hôte/base, utilisateur et mot de passe. Pour
+Spring, l'URL doit avoir cette forme :
+
+```text
+jdbc:postgresql://HOST/BASE?sslmode=require
+```
+
+Utiliser l'adresse directe proposée par Neon, pas une base locale. Flyway créera
+automatiquement les tables au premier démarrage du backend.
+
+### 2. Déployer le backend sur Render
+
+Dans Render, choisir **New > Blueprint**, connecter ce dépôt GitHub et utiliser
+le fichier `render.yaml`. Render demandera les valeurs suivantes :
+
+- `SPRING_DATASOURCE_URL` : l'URL JDBC Neon ci-dessus ;
+- `SPRING_DATASOURCE_USERNAME` : l'utilisateur Neon ;
+- `SPRING_DATASOURCE_PASSWORD` : le mot de passe Neon.
+
+Une fois le déploiement terminé, noter l'URL HTTPS du service, par exemple
+`https://thomswatch-api-demarett.onrender.com`, et vérifier :
+
+```text
+https://ADRESSE-RENDER/actuator/health
+```
+
+Le plan Render gratuit s'endort après une période sans trafic. La première
+recherche après cette mise en veille peut donc être sensiblement plus lente.
+
+### 3. Activer GitHub Pages
+
+Dans le dépôt GitHub :
+
+1. ouvrir **Settings > Secrets and variables > Actions > Variables** ;
+2. créer `API_BASE_URL` avec l'URL HTTPS Render, sans `/` final ;
+3. ouvrir **Settings > Pages** et choisir **GitHub Actions** comme source ;
+4. fusionner cette branche dans `main`, ou lancer manuellement le workflow
+   **Deploy frontend to GitHub Pages** depuis l'onglet Actions.
+
+L'application sera publiée à l'adresse :
+
+```text
+https://demarett.github.io/overwatch_stats/
+```
+
+Le workflow adapte automatiquement ce chemin au nom du dépôt. Si le dépôt
+GitHub est ensuite renommé `thomswatch`, l'adresse deviendra
+`https://demarett.github.io/thomswatch/`.
+
+L'URL du backend n'est pas un secret. Les identifiants PostgreSQL restent
+uniquement dans Render et ne doivent jamais être ajoutés aux variables GitHub
+Pages ni au dépôt.
+
 ## API du projet
 
 - `POST /api/players/lookup` — importe un BattleTag public ;
@@ -60,7 +129,8 @@ Le serveur Angular utilise déjà `proxy.conf.json` pour transmettre `/api` à `
 
 Le format accepté dans la recherche est `Pseudo#1234`. Les routes du navigateur
 utilisent la forme encodée, par exemple `/profil/Pseudo-1234` et
-`/historique/Pseudo-1234`.
+`/historique/Pseudo-1234`. Sur GitHub Pages, elles apparaissent après le `#`,
+par exemple `/#/profil/Pseudo-1234`.
 
 ## Structure
 
